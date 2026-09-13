@@ -1,202 +1,419 @@
-\# AI-Driven Material Standardization and Harmonization Across CPSEs
 
+# AI-Driven Material Standardization and Harmonization Across CPSEs
 
+**Smart India Hackathon 2026 — Problem Statement 26099**
 
-\## Smart India Hackathon — Problem Statement 26099
+An AI-driven material intelligence platform for identifying duplicate and equivalent materials across CPSE material masters and mapping them to a common national material standard.
 
+## Problem Statement
 
+Central Public Sector Enterprises (CPSEs) across sectors such as Oil & Gas, Power, Steel, Mining, and Heavy Engineering maintain their material masters independently.
 
-An AI-driven material intelligence platform designed to identify duplicate and equivalent materials across CPSE material masters and map them to a common national material standard.
+The same or functionally equivalent material may therefore have different:
 
+- Material codes
+- Descriptions and naming conventions
+- Abbreviations
+- Technical specifications
+- Units of measurement
+- Classifications
 
+This creates duplicate material masters, inconsistent descriptions, difficulty in identifying equivalent materials, limited cross-CPSE procurement visibility, and increased effort for material rationalization and legacy migration.
 
-\## Problem
+## Proposed Solution
 
+The system provides an end-to-end material harmonization pipeline:
 
 
-Different CPSEs may maintain similar materials using different material codes, descriptions, specifications, units of measurement, and naming conventions.
+CPSE Material Records
+        ↓
+Data Ingestion
+        ↓
+Normalization
+        ↓
+Technical Attribute Extraction
+        ↓
+Candidate Generation
+        ↓
+Attribute-Aware Matching
+        ↓
+MATCH / REVIEW / NO_MATCH
+        ↓
+Human Validation
+        ↓
+National Material Master
+        ↓
+Legacy Migration & Analytics
 
 
+The key approach is to combine **description similarity with technical attribute comparison and conflict detection**, rather than relying only on text similarity.
 
-This creates:
+## Implementation
 
+### 1. Data Foundation
 
+The prototype uses a controlled synthetic dataset representing heterogeneous CPSE material records.
 
-\- Duplicate material masters
+* 300 CPSE material records
+* 100 canonical material standards
+* 10 material categories
+* Multiple CPSE-specific data formats
+* Positive matching cases
+* Easy negative cases
+* Hard negative cases
+* Ground-truth labels
 
-\- Inconsistent descriptions
+Example CPSE formats:
 
-\- Difficult procurement analysis
 
-\- Poor cross-organization visibility
+CPSE-A → material_code, description, uom
+CPSE-B → item_id, item_name, unit
+CPSE-C → mat_no, short_text, base_uom
 
-\- Manual material rationalization effort
 
+These different formats are converted into a common internal representation.
 
+### 2. Normalization
 
-\## Proposed Solution
+Material descriptions are standardized by handling:
 
+* Case variations
+* Punctuation
+* Separators
+* Abbreviations
+* Material-grade notation
+* Dimension formatting
+* Unit notation
 
+For example:
 
-The platform processes CPSE material records through a multi-stage harmonization pipeline:
 
+M10 X 50 SS304 HEX BOLT
+M10X50 SS304 HEX BOLT
+M10-50 SS304 HEX BOLT
 
 
-1\. \*\*Data Ingestion\*\* — Standardizes material records from different CPSE formats.
+are normalized into a consistent representation.
 
-2\. \*\*Normalization\*\* — Cleans descriptions, abbreviations, units, and naming variations.
+### 3. Technical Attribute Extraction
 
-3\. \*\*Technical Attribute Extraction\*\* — Extracts specifications such as size, grade, pressure class, voltage, power, flow, and other domain attributes.
+The system extracts technical specifications from material descriptions, including:
 
-4\. \*\*Candidate Generation\*\* — Generates potential matches within the same material category.
 
-5\. \*\*AI Matching Engine\*\* — Combines description similarity with technical attribute comparison and conflict detection.
+Diameter
+Length
+Size
+Grade
+Pressure Class
+Schedule
+Voltage
+Power
+Flow Rate
+Head
+Cable Cores
+Cross Section
+Bearing Number
+Valve Type
+Flange Type
+Gasket Type
+Tool Type
+Tool Size
 
-6\. \*\*Harmonization \& Governance\*\* — Assigns confidence-based decisions: MATCH, REVIEW, or NO\_MATCH.
 
-7\. \*\*National Material Master\*\* — Maps equivalent materials to a Common National Material Code.
+These structured attributes provide additional evidence for material comparison.
 
-8\. \*\*Migration \& Analytics\*\* — Supports legacy-code migration, review workflows, auditability, and procurement insights.
+### 4. Candidate Generation
 
+Candidate generation performs coarse blocking by material category.
 
 
-\## Key Features
+FASTENER → FASTENER
+VALVE    → VALVE
+PUMP     → PUMP
 
 
+Description similarity is used as a feature, while technical specifications are evaluated later by the matching engine. This preserves difficult hard-negative cases for detailed evaluation.
 
-\- Cross-CPSE material matching
+### 5. Attribute-Aware Matching
 
-\- Technical attribute-aware matching
+The matching engine combines:
 
-\- Hard-conflict detection
 
-\- Confidence-based decision making
+Description Similarity
+        +
+Technical Attribute Comparison
+        +
+Critical Attribute Matching
+        +
+Technical Conflict Detection
+        ↓
+Confidence Score
 
-\- Human-in-the-loop review
 
-\- Common National Material Code generation
+For example, two materials may have highly similar descriptions but different pressure classes:
 
-\- Legacy material migration mapping
 
-\- Review queue and approval workflow
+GATE VALVE 150 CLASS
+GATE VALVE 300 CLASS
 
-\- Audit trail
 
-\- Analytics and procurement intelligence
+The system detects the technical conflict instead of treating them as equivalent based only on textual similarity.
 
+### 6. Matching Decisions
 
+The system produces three decisions:
 
-\## Technology Stack
+**MATCH**
+Strong evidence indicates that the materials are equivalent.
 
+**REVIEW**
+A potential match exists but requires human validation.
 
+**NO_MATCH**
+The evidence indicates that the materials should not be harmonized.
 
-\- Python
+### 7. Harmonization
 
-\- Pandas
+Matched CPSE materials are mapped to a Common National Material Code while retaining their original CPSE identifiers.
 
-\- NumPy
 
-\- RapidFuzz
+CPSE Material
+      ↓
+CPSE Material Code
+      ↓
+Canonical Material
+      ↓
+Common National Material Code
 
-\- Streamlit
 
-\- Plotly
+### 8. Review & Approval
 
+Materials requiring validation are placed into a review queue containing matching evidence, confidence, technical attributes, conflicts, reviewer decisions, comments, and timestamps.
 
+This provides a human-in-the-loop governance mechanism before harmonization and migration.
 
-The prototype is designed to run on standard CPU hardware without requiring a GPU or large language model.
+### 9. Legacy Migration
 
+Harmonization results are converted into migration mappings with statuses such as:
 
 
-\## Prototype Dataset
+MIGRATION_READY
+REVIEW_REQUIRED
+BLOCKED
 
 
+This provides a controlled approach to legacy material-code rationalization.
 
-The current demonstration uses a controlled synthetic benchmark representing CPSE material records across multiple industrial categories.
+### 10. Analytics
 
+The platform provides analytics for:
 
+* CPSE-wise material distribution
+* Category-wise distribution
+* Migration readiness
+* Common materials across CPSEs
+* Potential material consolidation
+* Procurement-related insights
 
-The benchmark contains:
+### 11. Auditability
 
+The system maintains traceability of:
 
+* Original CPSE material
+* Recommended national material
+* Confidence score
+* Matching evidence
+* Technical conflicts
+* Final decision
+* Review status
+* Reviewer information
+* Review timestamp
 
-\- 300 CPSE material records
+## Material Categories
 
-\- 100 canonical material standards
+The current prototype covers:
 
-\- Multiple CPSE data formats
 
-\- Positive and hard-negative matching cases
+BEARING
+ELECTRICAL_CABLE
+FASTENER
+FLANGE
+GASKET
+INDUSTRIAL_TOOL
+MOTOR
+PIPE
+PUMP
+VALVE
 
-\- Ground-truth labels for evaluation
 
+## Benchmark Evaluation
 
+The prototype was evaluated using a controlled ground-truth benchmark containing 300 CPSE material records.
 
-The synthetic dataset is used for prototype validation and does not represent confidential CPSE data.
+| Metric                   | Result |
+| ------------------------ | -----: |
+| CPSE material records    |    300 |
+| Canonical materials      |    100 |
+| Correct top-1 mappings   |    300 |
+| Top-1 benchmark accuracy |   100% |
 
+### Decision Distribution
 
+| Decision | Records |
+| -------- | ------: |
+| MATCH    |     269 |
+| REVIEW   |      16 |
+| NO_MATCH |      15 |
 
-\## Evaluation
+The benchmark produced **300/300 correct top-1 mappings**.
 
+The REVIEW state is intentionally retained so that uncertain cases can be validated by a human instead of being automatically accepted.
 
+> The reported accuracy is based on the controlled synthetic benchmark used for this prototype and is not a claim of production accuracy on real CPSE data.
 
-The current benchmark achieved:
+## Application Modules
 
+The Streamlit application provides:
 
+* **Dashboard** —                 Overall system and harmonization overview
+* **Material Matching** —         Material-level matching evidence and decisions
+* **Review & Approval** —         Human validation workflow
+* **National Material Master** —  Standardized material records and mappings
+* **Legacy Migration** —          Migration mappings and readiness
+* **Analytics** —                 Material, category, CPSE, and consolidation insights
+* **Audit Trail** —               Traceability of harmonization activities
 
-\- \*\*300/300 correct top-1 material mappings\*\*
+## Technology Stack
 
-\- \*\*100% benchmark top-1 accuracy\*\*
+| Technology | Purpose                 |
+| ---------- | ----------------------- |
+| Python     | Core implementation     |
+| Pandas     | Data processing         |
+| NumPy      | Numerical operations    |
+| RapidFuzz  | Text similarity         |
+| Streamlit  | Interactive application |
+| Plotly     | Data visualization      |
 
+The prototype runs on standard CPU hardware and does not require a GPU or a large language model.
 
-
-The system also separates automatic matches from cases requiring human review or blocking, rather than relying only on a similarity score.
-
-
-
-\## Project Structure
-
-
+## Project Structure
 
 ```text
-
 material-harmonization/
-
 │
-
 ├── app.py
-
-├── requirements.txt
-
 ├── README.md
-
+├── requirements.txt
+│
 ├── .streamlit/
-
 │   └── config.toml
-
 │
-
 ├── data/
-
 │   ├── benchmark/
-
+│   │   ├── canonical_materials.csv
+│   │   ├── material_records.csv
+│   │   └── match_pairs.csv
+│   │
 │   └── processed/
-
+│       ├── candidate_pairs.csv
+│       ├── evaluation_results.csv
+│       ├── final_matches.csv
+│       ├── harmonized_material_mapping.csv
+│       ├── migration_mapping.csv
+│       ├── national_material_master.csv
+│       ├── processed_material_records.csv
+│       ├── review_queue.csv
+│       └── ...
 │
-
 └── src/
+    ├── normalization.py
+    ├── attribute_extraction.py
+    ├── candidate_generation.py
+    ├── matching_engine.py
+    ├── select_best_matches.py
+    ├── evaluate_matching.py
+    ├── create_harmonized_mapping.py
+    ├── create_migration_mapping.py
+    ├── create_review_queue.py
+    ├── create_review_decisions.py
+    ├── create_audit_log.py
+    └── ...
+```
 
-&#x20;   ├── normalization.py
+## Running the Project
 
-&#x20;   ├── attribute\_extraction.py
+### Clone the repository
 
-&#x20;   ├── candidate\_generation.py
 
-&#x20;   ├── matching\_engine.py
+git clone https://github.com/EmmanuelShaaron/material-harmonization.git
+cd material-harmonization
 
-&#x20;   ├── select\_best\_matches.py
 
-&#x20;   ├── evaluate\_matching.py
+### Create a virtual environment
 
-&#x20;   └── ...
+
+python -m venv .venv
+
+
+### Activate the environment on Windows
+
+
+.venv\Scripts\Activate.ps1
+
+
+### Install dependencies
+
+
+pip install -r requirements.txt
+
+
+### Run the application
+
+
+streamlit run app.py
+
+
+## Current Scope
+
+The current implementation demonstrates the complete workflow:
+
+
+Ingest
+→ Normalize
+→ Extract Technical Attributes
+→ Generate Candidates
+→ Match
+→ Validate
+→ Harmonize
+→ Migrate
+→ Analyze
+
+
+The prototype focuses on demonstrating the technical feasibility of material standardization, matching, governance, harmonization, migration, and analytics using a controlled synthetic dataset.
+
+## Future Production Adaptation
+
+A production implementation would require integration with real CPSE material master data and enterprise systems.
+
+Potential extensions include:
+
+* Real CPSE master-data integration
+* Enterprise schema adapters
+* Domain-specific material taxonomies
+* ERP/SAP integration
+* Role-based access control
+* Production-scale processing
+* Advanced ML/NLP models
+* Continuous improvement using reviewer feedback
+* Enterprise security and governance
+
+## Disclaimer
+
+This project is a prototype developed for **Smart India Hackathon 2026 — Problem Statement 26099**.
+
+The demonstration dataset is synthetic and does not contain confidential CPSE data.
+
+The benchmark results represent performance on the controlled dataset created for this prototype.
+
+Production deployment would require validation against real CPSE material masters, domain-specific business rules, enterprise security requirements, governance policies, and ERP/SAP integration requirements.
 
